@@ -1,7 +1,7 @@
 krust-pm - Intro
 =======
 
-*Formeley rust-pm (available at http://crates.io), now rewritten in [Kotlin](kotlinlang.org)*
+*Formeley `rust-pm (available at http://crates.io), now rewritten in [Kotlin](kotlinlang.org)*
 
 This is a pocket process manager. At some point it will be a better imitation of systemd
 Take a look at this [![asciicast](https://asciinema.org/a/20286.png)](https://asciinema.org/a/20286).
@@ -47,12 +47,10 @@ This is a early stage project, Not used in production yet.
 TODO
 ====
 
-   - Augment the API to support scalling processes down and up.
-   - Implement 0 `max_retries` to mean infinite. **DONE**
+   - Augment the API to support scaling processes down and up.
+   - Implement 0 `max_retries` to mean infinite.
    - Allow configuration of `workdir` for processes.
-   - Invest in logging? **DONE**. So far with simple `writeln!` since specific threads handle `stdout`.
-   - Implement [fern](https://dabo.guru/rust/fern/fern/) to replace bizarre `writeln!`
-   - Add command line parser to specify config file. So `rust-pm` can be put on `$PATH` and run with any config file.
+   - Add command line parser to specify config file.
    - Add `env` per process.
    - Specify the user that must run a managed process
 
