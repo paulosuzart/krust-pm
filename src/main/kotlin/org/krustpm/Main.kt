@@ -14,6 +14,7 @@ import co.paralleluniverse.fibers.SuspendExecution
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.Future
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.lang.ProcessBuilder
 import java.lang.Runnable
 import org.zeroturnaround.exec.InvalidExitValueException
@@ -25,6 +26,16 @@ import spark.Spark.*
 import spark.Request
 import spark.Response
 import com.google.gson.Gson
+
+
+
+enum class ProcessStatus() {
+    Started
+    Running
+    Done
+    RetriesExceeded
+
+}
 
 
 class ProcessManager() {
@@ -41,11 +52,13 @@ class ProcessManager() {
   }
 }
 
-public data class ManagedProcessJson(val name : String, val cmd : String, val currentTry : Long)
+public data class ManagedProcessJson(val name : String, val cmd : String, val currentTry : Long, val status : ProcessStatus)
+
 
 class ManagedProcess(val name : String, val cmd : String, val maxRetries : Long) {
   val currentTry = AtomicLong()
   var thread : Thread? = null
+  var status =  ProcessStatus.Started
 
   /**
   * Starts the target process. Will keep trying for `maxRetries`.
@@ -55,7 +68,7 @@ class ManagedProcess(val name : String, val cmd : String, val maxRetries : Long)
 
     this.thread = Thread (Runnable {
 
-
+      this.status = ProcessStatus.Running
       val logger = LoggerFactory.getLogger(javaClass<ManagedProcess>())
       MDC.put("process", this.name);
       while(true) {
@@ -66,11 +79,13 @@ class ManagedProcess(val name : String, val cmd : String, val maxRetries : Long)
         val result = p.getFuture().get()
         if (result.getExitValue() == 0) {
           logger.info("finished at try ${this.currentTry.get()}")
+          this.status = ProcessStatus.Done
           break
         } else {
           logger.info("finished with error")
           if (this.currentTry.get() == this.maxRetries) {
             logger.info("No more retries left")
+            this.status = ProcessStatus.RetriesExceeded
             break
           }
         }
@@ -99,7 +114,7 @@ public class Main {
       get("/", {req, res ->
         val ps = java.util.LinkedList<ManagedProcessJson>()
         for (p in kpm.processes.values()) {
-          ps.add(ManagedProcessJson(p.name, p.cmd, p.currentTry.get()))
+          ps.add(ManagedProcessJson(p.name, p.cmd, p.currentTry.get(), p.status))
         }
         ps
       },

@@ -20,28 +20,20 @@ And with luck you open your browser at `localhost:4000` and will see something l
 
 ```json
 [{
-  "command" : "./bad_sleeper.py",
-  "max_retries" : 0,
-  "name" : "bad_sleeper",
-  "status" : {
-    "meta" : 1,
-    "state" : "running"
-  }
+  "name": "bad_sleeper",
+  "cmd": "./src/main/resources/bad_sleeper.py",
+  "currentTry": 3,
+  "status": "RetriesExceeded"
 }]
 ```
 
-`rust-pm` start and watch the process. If it fails it starts another instance for maximum `max_retries` times.
-
-Ideas
-=====
-
-By now the `stdin`, `stdout` and `stder` are piped. We may change it to inherited, so the `rust-pm` output is in fact the process output. It depends on what we will do for logging.
+`krust-pm` start and watch the process. If it fails it starts another instance for maximum `max_retries` times.
 
 
 WARN
 ====
 
-This is a early stage project, Not used in production yet.
+This is an early stage project, Not used in production yet.
 
 
 TODO

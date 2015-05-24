@@ -26,6 +26,18 @@ jar {
     version =  '0.1.0'
 }
 
+//create a single Jar with all dependencies
+task fatJar(type: Jar) {
+	manifest {
+        attributes 'Implementation-Title': 'krust-pm',
+        	'Implementation-Version': jar.version,
+        	'Main-Class': 'org.krustpm.Main'
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
 repositories {
     mavenLocal()
     mavenCentral()
