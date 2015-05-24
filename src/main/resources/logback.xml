@@ -1,0 +1,49 @@
+<configuration>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <!-- encoders are assigned the type
+         ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="SIFT" class="ch.qos.logback.classic.sift.SiftingAppender">
+     <!-- in the absence of the class attribute, it is assumed that the
+          desired discriminator type is
+          ch.qos.logback.classic.sift.MDCBasedDiscriminator -->
+     <discriminator>
+       <key>process</key>
+       <defaultValue>unknown</defaultValue>
+     </discriminator>
+     <sift>
+       <appender name="FILE-${process}" class="ch.qos.logback.core.FileAppender">
+         <file>/tmp/${process}.log</file>
+         <append>false</append>
+         <layout class="ch.qos.logback.classic.PatternLayout">
+           <pattern>%d [%thread] %level %mdc %logger{35} - %msg%n</pattern>
+         </layout>
+       </appender>
+       <appender name="CONS-${process}" class="ch.qos.logback.core.ConsoleAppender">
+         <encoder>
+           <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %mdc %logger{36} - %msg%n</pattern>
+         </encoder>
+      </appender>
+
+     </sift>
+   </appender>
+   <appender name="SIFT-STD" class="ch.qos.logback.core.FileAppender">
+     <file>/tmp/krust-pm.log</file>
+     <append>true</append>
+     <encoder>
+       <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %mdc %logger{36} - %msg%n</pattern>
+     </encoder>
+    </appender>
+
+  <root level="debug">
+    <appender-ref ref="SIFT" />
+    <appender-ref ref="SIFT-STD" />
+
+  </root>
+
+</configuration>
