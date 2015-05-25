@@ -4,7 +4,6 @@ krust-pm - Intro
 *Formeley `rust-pm (available at http://crates.io), now rewritten in [Kotlin](kotlinlang.org)*
 
 This is a pocket process manager. At some point it will be a better imitation of systemd
-Take a look at this [![asciicast](https://asciinema.org/a/20286.png)](https://asciinema.org/a/20286).
 
 Using it is very simple, just drop a rust-pm.toml in the same folder your
 `krust-pm` starts with a config like:
