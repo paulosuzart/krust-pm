@@ -74,7 +74,7 @@ class ManagedProcess(val name : String, val cmd : String, val maxRetries : Long)
       while(true) {
         currentTry.incrementAndGet()
 
-        val p = ProcessExecutor().command(this.cmd).redirectOutput(System.out).start()
+        val p = ProcessExecutor().command(this.cmd).redirectOutput(System.out).info(logger).start()
         logger.info("started")
         val result = p.getFuture().get()
         if (result.getExitValue() == 0) {

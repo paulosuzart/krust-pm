@@ -10,6 +10,10 @@ buildscript {
     }
 }
 
+plugins {
+  id "us.kirchmeier.capsule" version "1.0-rc1"
+}
+
 apply plugin: 'java'
 apply plugin: 'kotlin' // New
 apply plugin: 'application'
@@ -22,21 +26,10 @@ configurations {
 }
 
 jar {
-    baseName = 'krust-pm'
+    baseName = 'krust-pm-0.1.0.jar'
     version =  '0.1.0'
 }
 
-//create a single Jar with all dependencies
-task fatJar(type: Jar) {
-	manifest {
-        attributes 'Implementation-Title': 'krust-pm',
-        	'Implementation-Version': jar.version,
-        	'Main-Class': 'org.krustpm.Main'
-    }
-    baseName = project.name + '-all'
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
-}
 
 repositories {
     mavenLocal()
@@ -59,18 +52,23 @@ sourceSets {
     }
 }
 
+
+
 dependencies {
     compile("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version") // New
     // compile("org.springframework.boot:spring-boot-starter-web")
     testCompile("junit:junit")
-    compile "co.paralleluniverse:quasar-core:0.6.2"
     compile "co.paralleluniverse:quasar-actors:0.6.2"
-    quasar  "co.paralleluniverse:quasar-core:0.6.2"
+    compile  "co.paralleluniverse:quasar-core:0.6.2:jdk8"
+    quasar  "co.paralleluniverse:quasar-core:0.6.2:jdk8"
+    //provided "co.paralleluniverse:capsule:1.0-rc1"
+    compile 'co.paralleluniverse:capsule-maven:1.0-rc1'
     compile "org.zeroturnaround:zt-exec:1.8"
-    compile 'ch.qos.logback:logback-classic:1.1.3'
-    compile 'com.sparkjava:spark-core:2.2'
+    compile ('ch.qos.logback:logback-classic:1.1.3')
+    compile ('com.sparkjava:spark-core:2.2')  {
+      exclude group: 'org.slf4j', module: 'slf4j-simple'
+    }
     compile 'com.google.code.gson:gson:2.3.1'
-
 }
 
 task wrapper(type: Wrapper) {
@@ -81,4 +79,14 @@ task wrapper(type: Wrapper) {
 
 run {
     jvmArgs "-javaagent:${configurations.quasar.iterator().next()}"
+}
+
+
+task mavenCapsule(type: MavenCapsule){
+  applicationClass mainClassName
+
+  capsuleManifest {
+    minJavaVersion = '1.8.0'
+    jvmArgs  ["-javaagent:${configurations.quasar.iterator().next()}"]
+  }
 }
