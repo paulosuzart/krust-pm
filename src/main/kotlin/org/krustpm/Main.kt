@@ -137,7 +137,7 @@ public class Main {
   companion object {
     platformStatic public fun main(args: Array<String>) {
 
-      test()
+      // TODO: Parse TOML
       val p1 = ManagedProcess("good_sleeper", "./src/main/resources/sleeper.py", 3).spawn() as ManagedProcessTrait
       val p2 = ManagedProcess("bad_sleeper", "./src/main/resources/bad_sleeper.py", 3).spawn() as ManagedProcessTrait
 
