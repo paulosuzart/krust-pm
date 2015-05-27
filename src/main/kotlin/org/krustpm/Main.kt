@@ -80,7 +80,7 @@ public trait ManagedProcessTrait {
 class ManagedProcess(private val name : String, private val cmd : String,
                      private val maxRetries : Long) : ProxyServerActor(name, false), ManagedProcessTrait {
   var currentTry = 0L
-  var thread : Thread? = null
+  var processStrand : Strand? = null
   var processStatus =  ProcessStatus.Started
 
   [throws(javaClass<SuspendExecution>())]
@@ -95,7 +95,7 @@ class ManagedProcess(private val name : String, private val cmd : String,
   [throws(javaClass<SuspendExecution>())]
   override public fun startCmd() {
 
-    this.thread = Thread (Runnable {
+    val thread = Thread(Runnable {
 
       this.processStatus = ProcessStatus.Running
       val logger = LoggerFactory.getLogger(javaClass<ManagedProcess>())
@@ -121,9 +121,8 @@ class ManagedProcess(private val name : String, private val cmd : String,
       }
 
     })
-    val strand = Strand.of(thread!!)
-
-    strand.start()
+    this.processStrand = Strand.of(thread)
+    this.processStrand!!.start()
   }
 
   [throws(javaClass<SuspendExecution>())]
