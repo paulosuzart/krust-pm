@@ -59,9 +59,7 @@ class ProcessManager() : ProxyServerActor("krust-pm", false),
   }
 
   [throws(javaClass<SuspendExecution>())]
-  override public fun getStatus() : List<ManagedProcessJson> {
-    return this.processes.map {it.value.getStatus()}
-  }
+  override public fun getStatus() = this.processes.map {it.value.getStatus()}
 }
 
 public data class ManagedProcessJson(val name : String,
@@ -90,9 +88,7 @@ class ManagedProcess(private val name : String,
   var processStatus =  ProcessStatus.Started
 
   [throws(javaClass<SuspendExecution>())]
-  override public fun  getName() : String  {
-    return this.name
-  }
+  override public fun getName() = this.name
 
   /**
   * Starts the target process. Will keep trying for `maxRetries`.
@@ -137,14 +133,13 @@ class ManagedProcess(private val name : String,
   }
 
   [throws(javaClass<SuspendExecution>())]
-  override public fun getStatus() : ManagedProcessJson {
-    return ManagedProcessJson(
+  override public fun getStatus() =
+    ManagedProcessJson(
       this.name,
       this.cmd,
       this.currentTry,
       this.processStatus
     )
-  }
 }
 
 
