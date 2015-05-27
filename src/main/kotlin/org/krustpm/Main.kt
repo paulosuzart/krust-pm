@@ -42,7 +42,8 @@ trait ProcessManagerTrait {
 
 }
 
-class ProcessManager() : ProxyServerActor("krust-pm", false), ProcessManagerTrait {
+class ProcessManager() : ProxyServerActor("krust-pm", false),
+                         ProcessManagerTrait {
   val processes = hashMapOf<String, ManagedProcessTrait>()
 
   [throws(javaClass<SuspendExecution>())]
@@ -63,7 +64,10 @@ class ProcessManager() : ProxyServerActor("krust-pm", false), ProcessManagerTrai
   }
 }
 
-public data class ManagedProcessJson(val name : String, val cmd : String, val currentTry : Long, val status : ProcessStatus)
+public data class ManagedProcessJson(val name : String,
+                                     val cmd : String,
+                                     val currentTry : Long,
+                                     val status : ProcessStatus)
 
 public trait ManagedProcessTrait {
   [throws(javaClass<SuspendExecution>())]
@@ -77,8 +81,10 @@ public trait ManagedProcessTrait {
 
 }
 
-class ManagedProcess(private val name : String, private val cmd : String,
-                     private val maxRetries : Long) : ProxyServerActor(name, false), ManagedProcessTrait {
+class ManagedProcess(private val name : String,
+                     private val cmd : String,
+                     private val maxRetries : Long) :
+                     ProxyServerActor(name, false), ManagedProcessTrait {
   var currentTry = 0L
   var processStrand : Strand? = null
   var processStatus =  ProcessStatus.Started
@@ -103,7 +109,12 @@ class ManagedProcess(private val name : String, private val cmd : String,
       while(true) {
         this.currentTry = this.currentTry + 1
 
-        val p = ProcessExecutor().command(this.cmd).redirectOutput(System.out).info(logger).start()
+        val p = ProcessExecutor()
+              .command(this.cmd)
+              .redirectOutput(System.out)
+              .info(logger)
+              .start()
+
         logger.info("started")
         val result = p.getFuture().get()
         if (result.getExitValue() == 0) {
@@ -127,7 +138,12 @@ class ManagedProcess(private val name : String, private val cmd : String,
 
   [throws(javaClass<SuspendExecution>())]
   override public fun getStatus() : ManagedProcessJson {
-    return ManagedProcessJson(this.name, this.cmd, this.currentTry, this.processStatus)
+    return ManagedProcessJson(
+      this.name,
+      this.cmd,
+      this.currentTry,
+      this.processStatus
+    )
   }
 }
 
