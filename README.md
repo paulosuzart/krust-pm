@@ -3,7 +3,9 @@ krust-pm - Intro
 
 *Formeley `rust-pm (available at http://crates.io), now rewritten in [Kotlin](kotlinlang.org)*
 
-This is a pocket process manager. At some point it will be a better imitation of systemd
+This is a pocket process manager. At some point it will be a better imitation of python's systemd.
+
+Behind the scenes it uses [Quasar actors and fibers](http://docs.paralleluniverse.co/quasar/) to handle the whole thing.
 
 Using it is very simple, just drop a rust-pm.toml in the same folder your
 `krust-pm` starts with a config like:
