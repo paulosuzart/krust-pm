@@ -36,8 +36,10 @@ repositories {
     mavenCentral()
     maven { url "https://oss.sonatype.org/content/repositories/releases" }
     maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
-//    maven { url "http://repository.jetbrains.com/all" }
-    maven { url "http://repository.jetbrains.com/spek" }
+    maven { url "http://repository.jetbrains.com/all" }
+    maven {
+            url "http://repository.jetbrains.com/spek"
+        }
 }
 
 // New entire sourceSets
@@ -68,9 +70,10 @@ dependencies {
       exclude group: 'org.slf4j', module: 'slf4j-simple'
     }
     compile 'com.google.code.gson:gson:2.3.1'
-
+    compile 'org.ow2.asm:asm:5.0.4'
     testCompile("junit:junit")
-    testCompile group: 'org.jetbrains.spek', name: 'spek', version: '0.1-SNAPSHOT', changing: true
+    testCompile 'org.ow2.asm:asm:5.0.4'
+    testCompile 'org.spek:spek:0.1-SNAPSHOT'
 
 }
 
