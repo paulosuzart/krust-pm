@@ -4,17 +4,12 @@ import kotlin.platform.platformStatic
 import co.paralleluniverse.fibers.Fiber
 import co.paralleluniverse.strands.Strand
 import co.paralleluniverse.strands.SuspendableRunnable
-import co.paralleluniverse.strands.channels.Channel
-import co.paralleluniverse.strands.channels.Channels
 import co.paralleluniverse.actors.ActorRef
-import co.paralleluniverse.actors.ActorRegistry
-import co.paralleluniverse.actors.BasicActor
 import co.paralleluniverse.actors.LocalActor
 import co.paralleluniverse.fibers.SuspendExecution
-import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.Future
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.locks.ReentrantReadWriteLock
+import co.paralleluniverse.actors.behaviors.ProxyServerActor
+import co.paralleluniverse.actors.behaviors.Server
+import co.paralleluniverse.fibers.SuspendExecution
 import java.lang.ProcessBuilder
 import java.lang.Runnable
 import org.zeroturnaround.exec.InvalidExitValueException
@@ -28,73 +23,113 @@ import spark.Response
 import com.google.gson.Gson
 
 
-
 enum class ProcessStatus() {
     Started
     Running
     Done
     RetriesExceeded
+}
+
+trait ProcessManagerTrait {
+  [throws(javaClass<SuspendExecution>())]
+  public fun manage(process : ManagedProcessTrait)
+
+  [throws(javaClass<SuspendExecution>())]
+  public fun startAll()
+
+  [throws(javaClass<SuspendExecution>())]
+  public fun getStatus() : List<ManagedProcessJson>
 
 }
 
+class ProcessManager() : ProxyServerActor("krust-pm", false), ProcessManagerTrait {
+  val processes = hashMapOf<String, ManagedProcessTrait>()
 
-class ProcessManager() {
-  val processes = ConcurrentHashMap<String, ManagedProcess>()
-
-  public fun manage(process : ManagedProcess) {
-      this.processes.put(process.name, process)
+  [throws(javaClass<SuspendExecution>())]
+  override public fun manage(process : ManagedProcessTrait) {
+      this.processes[process.getName()] = process
   }
 
-  public fun startAll() {
-    for (p in this.processes.values()) {
-      p.start()
+  [throws(javaClass<SuspendExecution>())]
+  override public fun startAll() {
+    for ((k, v) in this.processes) {
+      v.startCmd()
     }
+  }
+
+  [throws(javaClass<SuspendExecution>())]
+  override public fun getStatus() : List<ManagedProcessJson> {
+    return this.processes.map {it.value.getStatus()}
   }
 }
 
 public data class ManagedProcessJson(val name : String, val cmd : String, val currentTry : Long, val status : ProcessStatus)
 
+public trait ManagedProcessTrait {
+  [throws(javaClass<SuspendExecution>())]
+  public fun startCmd()
 
-class ManagedProcess(val name : String, val cmd : String, val maxRetries : Long) {
-  val currentTry = AtomicLong()
+  [throws(javaClass<SuspendExecution>())]
+  public fun getStatus(): ManagedProcessJson
+
+  [throws(javaClass<SuspendExecution>())]
+  public fun getName(): String
+
+}
+
+class ManagedProcess(private val name : String, private val cmd : String,
+                     private val maxRetries : Long) : ProxyServerActor(name, false), ManagedProcessTrait {
+  var currentTry = 0L
   var thread : Thread? = null
-  var status =  ProcessStatus.Started
+  var processStatus =  ProcessStatus.Started
+
+  [throws(javaClass<SuspendExecution>())]
+  override public fun  getName() : String  {
+    return this.name
+  }
 
   /**
   * Starts the target process. Will keep trying for `maxRetries`.
   * If `maxRetries` is `0` will try forever.
   */
-  public fun start() {
+  [throws(javaClass<SuspendExecution>())]
+  override public fun startCmd() {
 
     this.thread = Thread (Runnable {
 
-      this.status = ProcessStatus.Running
+      this.processStatus = ProcessStatus.Running
       val logger = LoggerFactory.getLogger(javaClass<ManagedProcess>())
       MDC.put("process", this.name);
       while(true) {
-        currentTry.incrementAndGet()
+        this.currentTry = this.currentTry + 1
 
         val p = ProcessExecutor().command(this.cmd).redirectOutput(System.out).info(logger).start()
         logger.info("started")
         val result = p.getFuture().get()
         if (result.getExitValue() == 0) {
-          logger.info("finished at try ${this.currentTry.get()}")
-          this.status = ProcessStatus.Done
+          logger.info("finished at try ${this.currentTry}")
+          this.processStatus = ProcessStatus.Done
           break
         } else {
           logger.info("finished with error")
-          if (this.currentTry.get() == this.maxRetries) {
+          if (this.currentTry == this.maxRetries) {
             logger.info("No more retries left")
-            this.status = ProcessStatus.RetriesExceeded
+            this.processStatus = ProcessStatus.RetriesExceeded
             break
           }
         }
       }
 
     })
-    this.thread!!.start()
+    val strand = Strand.of(thread!!)
+
+    strand.start()
   }
 
+  [throws(javaClass<SuspendExecution>())]
+  override public fun getStatus() : ManagedProcessJson {
+    return ManagedProcessJson(this.name, this.cmd, this.currentTry, this.processStatus)
+  }
 }
 
 
@@ -102,21 +137,19 @@ public class Main {
 
   companion object {
     platformStatic public fun main(args: Array<String>) {
-      val p1 = ManagedProcess("good_sleeper", "./src/main/resources/sleeper.py", 3)
-      val p2 = ManagedProcess("bad_sleeper", "./src/main/resources/bad_sleeper.py", 3)
 
-      val kpm = ProcessManager()
+      test()
+      val p1 = ManagedProcess("good_sleeper", "./src/main/resources/sleeper.py", 3).spawn() as ManagedProcessTrait
+      val p2 = ManagedProcess("bad_sleeper", "./src/main/resources/bad_sleeper.py", 3).spawn() as ManagedProcessTrait
+
+      val kpm = ProcessManager().spawn() as ProcessManagerTrait
       kpm.manage(p1)
       kpm.manage(p2)
       kpm.startAll()
       val gson = Gson()
 
       get("/", {req, res ->
-        val ps = java.util.LinkedList<ManagedProcessJson>()
-        for (p in kpm.processes.values()) {
-          ps.add(ManagedProcessJson(p.name, p.cmd, p.currentTry.get(), p.status))
-        }
-        ps
+        kpm.getStatus()
       },
       { gson.toJson(it)})
     }

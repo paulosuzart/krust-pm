@@ -59,6 +59,7 @@ dependencies {
     // compile("org.springframework.boot:spring-boot-starter-web")
     testCompile("junit:junit")
     compile "co.paralleluniverse:quasar-actors:0.6.2"
+    compile 'org.ow2.asm:asm:5.0.4'
     compile  "co.paralleluniverse:quasar-core:0.6.2:jdk8"
     quasar  "co.paralleluniverse:quasar-core:0.6.2:jdk8"
     //provided "co.paralleluniverse:capsule:1.0-rc1"
