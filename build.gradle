@@ -36,10 +36,7 @@ repositories {
     mavenCentral()
     maven { url "https://oss.sonatype.org/content/repositories/releases" }
     maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
-    maven { url "http://repository.jetbrains.com/all" }
-    maven {
-            url "http://repository.jetbrains.com/spek"
-        }
+    maven { url "http://repository.jetbrains.com/spek" }
 }
 
 // New entire sourceSets
@@ -73,7 +70,7 @@ dependencies {
     compile 'org.ow2.asm:asm:5.0.4'
     testCompile("junit:junit")
     testCompile 'org.ow2.asm:asm:5.0.4'
-    testCompile 'org.spek:spek:0.1-SNAPSHOT'
+    testCompile 'org.jetbrains.spek:spek:0.1-SNAPSHOT'
 
 }
 
@@ -87,6 +84,31 @@ run {
     jvmArgs "-javaagent:${configurations.quasar.iterator().next()}"
 }
 
+test {
+    jvmArgs "-javaagent:${configurations.quasar.iterator().next()}"
+}
+
+test.dependsOn jar
+tasks.withType(Test) {
+        useJUnit()
+        // systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
+
+	// systemProperty "java.util.logging.config.file", "jul.properties"
+        //systemProperty "log4j.configurationFile", "${rootProject.projectDir}/log4j.xml"
+        // systemProperty "Log4jContextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
+
+        // systemProperty 'co.paralleluniverse.debugMode', 'true'
+        systemProperty 'co.paralleluniverse.monitoring.flightRecorderLevel', '5'
+        systemProperty 'co.paralleluniverse.globalFlightRecorder', 'true'
+        systemProperty 'co.paralleluniverse.flightRecorderDumpFile', 'quasar.log'
+        systemProperty 'co.paralleluniverse.monitoring.flightRecorderSize', '200000'
+
+        //jvmArgs "-javaagent:${quasarJar}" // =vdmc (verbose, debug, allow monitors, check class)
+        jvmArgs "-Xmx2048m"
+        doLast() {
+            println "file://" + getReports().getHtml().getDestination() + "/index.html"
+        }
+    }
 
 task mavenCapsule(type: MavenCapsule){
   applicationClass mainClassName

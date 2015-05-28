@@ -1,19 +1,41 @@
 package org.krustpm
 
 import kotlin.test.assertEquals
-import org.jetbrains.spek.api.Spek
+import org.jetbrains.spek.api.*
 import kotlin.test.assertTrue
+
 
 class MainSpek : Spek() {init {
 
     given("A Managed Process") {
-      val p1 = ManagedProcess("good_sleeper", "./src/main/resources/sleeper.py", 3).spawn() as ManagedProcessTrait
+      val p1 = ManagedProcess("good_sleeper",
+                              "./src/main/resources/sleeper.py",
+                              3,
+                              2).spawn() as ManagedProcessTrait
 
-      on("invoking its status") {
-        val status = p1.getStatus()
-        it ("should have the right name") {
-          assertEquals("good_sleeper", status.name)
+      on("scaling") {
+        it ("should have 2 instance running after scale") {
+          val scaled = p1.scale(null)
+          //Thread.sleep(1000)
+          val statusAfterScale = p1.getStatus()
+          shouldEqual(2, statusAfterScale.totalInstances)
+        }
+
+        it ("should scale down to 1 if request less than 1") {
+          val scaled = p1.scale(0)
+          val statusAfterScaleDown = p1.getStatus()
+          shouldEqual(1, statusAfterScaleDown.totalInstances)
+          shouldEqual(1, scaled)
         }
       }
+      on("status") {
+        val status = p1.getStatus()
+        it ("should have the right name") {
+          shouldEqual("good_sleeper", status.name)
+        }
+
+      }
+
+
     }
 }}
