@@ -23,37 +23,40 @@ And with luck you open your browser at `localhost:4000` and will see something l
 ```json
 [
   {
-    name: "good_sleeper",
-    cmd: "./sleeper.py",
-    status: "Started",
-    totalInstances: 2,
-    instances: [
+    "name": "good_sleeper",
+    "cmd": "./sleeper.py",
+    "status": "Started",
+    "totalInstances": 2,
+    "instances": [
       {
-        id: 0,
-        currentTry: 1,
-        status: "Done"
+        "id": 0,
+        "currentTry": 1,
+        "status": "Done"
       },
       {
-        id: 1,
-        currentTry: 1,
-        status: "Done"
+        "id": 1, // inc forever per new instance scaled
+        "currentTry": 1,
+        "status": "Done" // or Done | Started | Running | RetriesExceeded
       }
     ]
   },
-  //...
 ]
 
 ```
 
 `krust-pm` start and watch the process. If it fails it starts another instance for maximum `max_retries` times.
 
-REST API
+REST API plus additional info
 ---
 
 Resource  | Verb | Path | Returns
 --------- | ---- | ---- | --------
-`root`    | GET  | /    | Json with Process details (see above)
-`process` | GET  | /:process | `to=AMOUNT` should set the number of instances of the `process` to `AMOUNT`
+`root`    | GET  | `/`    | Json with Process details (see above)
+`process` | GET  | `/:process` | `to=AMOUNT` sets the number of instances of the `process` to `AMOUNT`.
+
+Notice:
+   - `krust-pm` is designed to manage long running processes such as `python` process, web servers etc. But in case of any process instance finishes, it will be with status Done. All managing resources (not Java Process Management) will be hanging on the server.
+   - If you scale down any process, it will remove the first `AMOUNT` of elements of the internal list, regardless of their status.
 
 
 WARN
@@ -65,7 +68,8 @@ This is an early stage project, Not used in production yet.
 TODO
 ====
 
-   - Augment the API to support scaling processes down and up. **Partially**, pending `http` API
+   - Augment the API to support scaling processes down and up. **Done**
+   - Add filter at `/` by status of istances
    - Implement 0 `max_retries` to mean infinite.
    - Allow configuration of `workdir` for processes.
    - Add command line parser to specify config file.
