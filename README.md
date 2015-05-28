@@ -47,6 +47,14 @@ And with luck you open your browser at `localhost:4000` and will see something l
 
 `krust-pm` start and watch the process. If it fails it starts another instance for maximum `max_retries` times.
 
+REST API
+---
+
+Resource  | Verb | Path | Returns
+--------- | ---- | ---- | --------
+`root`    | GET  | /    | Json with Process details (see above)
+`process` | GET  | /:process | `to=AMOUNT` should set the number of instances of the `process` to `AMOUNT`
+
 
 WARN
 ====

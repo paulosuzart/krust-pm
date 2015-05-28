@@ -40,6 +40,9 @@ trait ProcessManagerTrait {
   [throws(javaClass<SuspendExecution>())]
   public fun getStatus() : List<ManagedProcessJson>
 
+  [throws(javaClass<SuspendExecution>())]
+  public fun scale(name : String, to : Int) : Int
+
 }
 
 class ProcessManager() : ProxyServerActor("krust-pm", true),
@@ -56,6 +59,11 @@ class ProcessManager() : ProxyServerActor("krust-pm", true),
     for ((k, v) in this.processes) {
       v.scale(null)
     }
+  }
+
+  [throws(javaClass<SuspendExecution>())]
+  override public fun scale(name : String, to : Int) : Int {
+    return this.processes[name]?.scale(to) ?: 0
   }
 
   [throws(javaClass<SuspendExecution>())]
@@ -205,8 +213,12 @@ public class Main {
     platformStatic public fun main(args: Array<String>) {
 
       // TODO: Parse TOML
-      val p1 = ManagedProcess("good_sleeper", "./src/main/resources/sleeper.py", 3, 2).spawn() as ManagedProcessTrait
-      val p2 = ManagedProcess("bad_sleeper", "./src/main/resources/bad_sleeper.py", 3, 1).spawn() as ManagedProcessTrait
+      val p1 = ManagedProcess("good_sleeper",
+                              "./src/main/resources/sleeper.py",
+                              3, 2).spawn() as ManagedProcessTrait
+      val p2 = ManagedProcess("bad_sleeper",
+                              "./src/main/resources/bad_sleeper.py",
+                              3, 1).spawn() as ManagedProcessTrait
 
       val kpm = ProcessManager().spawn() as ProcessManagerTrait
       kpm.manage(p1)
@@ -218,6 +230,14 @@ public class Main {
         kpm.getStatus()
       },
       { gson.toJson(it)})
+
+      get("/:process/scale", {req, res ->
+        // TODO: Handle Exception
+        val process = req.params(":process")
+        val to = req.queryParams("to")
+        kpm.scale(process, Integer.valueOf(to))
+        },
+        {gson.toJson(it)})
     }
   }
 
