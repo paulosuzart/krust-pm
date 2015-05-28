@@ -42,7 +42,7 @@ trait ProcessManagerTrait {
 
 }
 
-class ProcessManager() : ProxyServerActor("krust-pm", false),
+class ProcessManager() : ProxyServerActor("krust-pm", true),
                          ProcessManagerTrait {
   val processes = hashMapOf<String, ManagedProcessTrait>()
 
@@ -54,7 +54,7 @@ class ProcessManager() : ProxyServerActor("krust-pm", false),
   [throws(javaClass<SuspendExecution>())]
   override public fun startAll() {
     for ((k, v) in this.processes) {
-      v.startCmd()
+      v.scale(null)
     }
   }
 
@@ -64,12 +64,17 @@ class ProcessManager() : ProxyServerActor("krust-pm", false),
 
 public data class ManagedProcessJson(val name : String,
                                      val cmd : String,
-                                     val currentTry : Long,
-                                     val status : ProcessStatus)
+                                     val status : ProcessStatus,
+                                     val totalInstances : Int,
+                                     val instances : List<ManagedProcessInstanceJson>)
+
+public data class ManagedProcessInstanceJson(val id : Int,
+                                             val currentTry : Int,
+                                             val status : ProcessStatus)
 
 public trait ManagedProcessTrait {
   [throws(javaClass<SuspendExecution>())]
-  public fun startCmd()
+  public fun scale(to : Int?): Int
 
   [throws(javaClass<SuspendExecution>())]
   public fun getStatus(): ManagedProcessJson
@@ -81,65 +86,116 @@ public trait ManagedProcessTrait {
 
 class ManagedProcess(private val name : String,
                      private val cmd : String,
-                     private val maxRetries : Long) :
-                     ProxyServerActor(name, false), ManagedProcessTrait {
-  var currentTry = 0L
-  var processStrand : Strand? = null
+                     private val maxRetries : Int,
+                     private var initScale : Int) :
+                     ProxyServerActor(name, true), ManagedProcessTrait {
+  var instanceCount : Int = 0
+  var currentTry : Int = 0
+  val instances = arrayListOf<ManagedProcess.Instance>()
   var processStatus =  ProcessStatus.Started
+  val logger = LoggerFactory.getLogger(javaClass<ManagedProcess>())
+
+  init {
+    MDC.put("process", name)
+  }
 
   [throws(javaClass<SuspendExecution>())]
   override public fun getName() = this.name
 
-  /**
-  * Starts the target process. Will keep trying for `maxRetries`.
-  * If `maxRetries` is `0` will try forever.
-  */
   [throws(javaClass<SuspendExecution>())]
-  override public fun startCmd() {
-
-    val thread = Thread(Runnable {
-
-      this.processStatus = ProcessStatus.Running
-      val logger = LoggerFactory.getLogger(javaClass<ManagedProcess>())
-      MDC.put("process", this.name);
-      while(true) {
-        this.currentTry = this.currentTry + 1
-
-        val p = ProcessExecutor()
-              .command(this.cmd)
-              .redirectOutput(System.out)
-              .info(logger)
-              .start()
-
-        logger.info("started")
-        val result = p.getFuture().get()
-        if (result.getExitValue() == 0) {
-          logger.info("finished at try ${this.currentTry}")
-          this.processStatus = ProcessStatus.Done
-          break
-        } else {
-          logger.info("finished with error")
-          if (this.currentTry == this.maxRetries) {
-            logger.info("No more retries left")
-            this.processStatus = ProcessStatus.RetriesExceeded
-            break
-          }
-        }
-      }
-
-    })
-    this.processStrand = Strand.of(thread)
-    this.processStrand!!.start()
+  protected fun scaleUp(to : Int) {
+    logger.debug("Scaling up to $to")
+    for (i in 1..to) {
+        this.instances.add(Instance(instanceCount++))
+    }
   }
 
   [throws(javaClass<SuspendExecution>())]
-  override public fun getStatus() =
-    ManagedProcessJson(
-      this.name,
-      this.cmd,
-      this.currentTry,
-      this.processStatus
-    )
+  protected fun scaleDown(to : Int) {
+    logger.debug("Scaling down to $to")
+    this.instances.take(to).map {
+      this.instances.remove(it)
+    }
+  }
+
+  [throws(javaClass<SuspendExecution>())]
+  override fun scale(to : Int?) : Int {
+    val verified = to ?: this.initScale
+
+    val _to = if (verified < 1) { 1 } else { verified }
+
+    this.logger.debug("Scaling to $_to")
+    var scaled = 0
+    if (this.instances.size() < _to) {
+      scaled = _to - this.instances.size()
+      this.scaleUp(_to)
+    } else if (this.instances.size() > _to) {
+      scaled = this.instances.size() - _to
+      this.scaleDown(_to)
+    }
+    return scaled
+  }
+
+
+  [throws(javaClass<SuspendExecution>())]
+  override public fun getStatus() : ManagedProcessJson {
+    val i = this.instances.map { it.getStatus() }
+    return ManagedProcessJson(
+            name = this.name,
+            cmd = this.cmd,
+            status = this.processStatus,
+            totalInstances = this.instances.size(),
+            instances = i
+          )
+    }
+
+    inner class Instance(val id : Int) {
+      val strand : Strand
+      var currentTry : Int = 0
+      var processStatus =  ProcessStatus.Started
+
+      [throws(javaClass<SuspendExecution>())]
+      init {
+        val thread = Thread(Runnable {
+
+          this.processStatus = ProcessStatus.Running
+          val logger = LoggerFactory.getLogger(javaClass<ManagedProcess>())
+          MDC.put("process", "${this@ManagedProcess.name}-$id")
+          while(true) {
+            this.currentTry = this.currentTry + 1
+
+            val p = ProcessExecutor()
+                  .command(this@ManagedProcess.cmd)
+                  .redirectOutput(System.out)
+                  .info(logger)
+                  .start()
+
+            logger.info("started")
+            val result = p.getFuture().get()
+            if (result.getExitValue() == 0) {
+              logger.info("finished at try ${this.currentTry}")
+              this.processStatus = ProcessStatus.Done
+              break
+            } else {
+              logger.info("finished with error")
+              if (this.currentTry == this@ManagedProcess.maxRetries) {
+                logger.info("No more retries left")
+                this.processStatus = ProcessStatus.RetriesExceeded
+                break
+              }
+            }
+          }
+        })
+        this.strand = Strand.of(thread)
+        this.strand.start()
+      }
+
+      [throws(javaClass<SuspendExecution>())]
+      public fun getStatus() : ManagedProcessInstanceJson =
+        ManagedProcessInstanceJson(this.id, this.currentTry, this.processStatus)
+
+
+    }
 }
 
 
@@ -149,8 +205,8 @@ public class Main {
     platformStatic public fun main(args: Array<String>) {
 
       // TODO: Parse TOML
-      val p1 = ManagedProcess("good_sleeper", "./src/main/resources/sleeper.py", 3).spawn() as ManagedProcessTrait
-      val p2 = ManagedProcess("bad_sleeper", "./src/main/resources/bad_sleeper.py", 3).spawn() as ManagedProcessTrait
+      val p1 = ManagedProcess("good_sleeper", "./src/main/resources/sleeper.py", 3, 2).spawn() as ManagedProcessTrait
+      val p2 = ManagedProcess("bad_sleeper", "./src/main/resources/bad_sleeper.py", 3, 1).spawn() as ManagedProcessTrait
 
       val kpm = ProcessManager().spawn() as ProcessManagerTrait
       kpm.manage(p1)

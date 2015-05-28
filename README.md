@@ -12,20 +12,37 @@ Using it is very simple, just drop a rust-pm.toml in the same folder your
 
 ```toml
 server-port = "localhost:4000"
-[bad_sleeper] # Process name
-command = "./bad_sleeper.py" # right now support 0 args commands
+[good_sleeper] # Process name
+command = "./sleeper.py" # right now support 0 args commands
 max_retries = 3 # 0 means forever
+instances = 2
 ```
 
 And with luck you open your browser at `localhost:4000` and will see something like:
 
 ```json
-[{
-  "name": "bad_sleeper",
-  "cmd": "./src/main/resources/bad_sleeper.py",
-  "currentTry": 3,
-  "status": "RetriesExceeded"
-}]
+[
+  {
+    name: "good_sleeper",
+    cmd: "./sleeper.py",
+    status: "Started",
+    totalInstances: 2,
+    instances: [
+      {
+        id: 0,
+        currentTry: 1,
+        status: "Done"
+      },
+      {
+        id: 1,
+        currentTry: 1,
+        status: "Done"
+      }
+    ]
+  },
+  //...
+]
+
 ```
 
 `krust-pm` start and watch the process. If it fails it starts another instance for maximum `max_retries` times.
@@ -40,12 +57,12 @@ This is an early stage project, Not used in production yet.
 TODO
 ====
 
-   - Augment the API to support scaling processes down and up.
+   - Augment the API to support scaling processes down and up. **Partially**, pending `http` API
    - Implement 0 `max_retries` to mean infinite.
    - Allow configuration of `workdir` for processes.
    - Add command line parser to specify config file.
    - Add `env` per process.
-   - Specify the user that must run a managed process
+   - Specify the os `user` that must run a managed process
 
 Licensing
 ===
