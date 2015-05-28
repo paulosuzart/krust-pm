@@ -3,23 +3,27 @@ package org.krustpm
 import kotlin.platform.platformStatic
 import co.paralleluniverse.fibers.Fiber
 import co.paralleluniverse.strands.Strand
+import co.paralleluniverse.strands.Strand.UncaughtExceptionHandler
 import co.paralleluniverse.strands.SuspendableRunnable
 import co.paralleluniverse.actors.ActorRef
-import co.paralleluniverse.actors.LocalActor
 import co.paralleluniverse.fibers.SuspendExecution
 import co.paralleluniverse.actors.behaviors.ProxyServerActor
-import co.paralleluniverse.actors.behaviors.Server
 import co.paralleluniverse.fibers.SuspendExecution
-import java.lang.ProcessBuilder
+
 import java.lang.Runnable
+
 import org.zeroturnaround.exec.InvalidExitValueException
 import org.zeroturnaround.exec.ProcessExecutor
+import org.zeroturnaround.exec.StartedProcess
+
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
+
 import spark.Spark.*
 import spark.Request
 import spark.Response
+
 import com.google.gson.Gson
 
 
@@ -122,6 +126,8 @@ class ManagedProcess(private val name : String,
   protected fun scaleDown(to : Int) {
     logger.debug("Scaling down to $to")
     this.instances.take(to).map {
+      this.logger.info("Killing instance ${it.id}")
+      it.kill()
       this.instances.remove(it)
     }
   }
@@ -136,10 +142,10 @@ class ManagedProcess(private val name : String,
     var scaled = 0
     if (this.instances.size() < _to) {
       scaled = _to - this.instances.size()
-      this.scaleUp(_to)
+      this.scaleUp(scaled)
     } else if (this.instances.size() > _to) {
       scaled = this.instances.size() - _to
-      this.scaleDown(_to)
+      this.scaleDown(scaled)
     }
     return scaled
   }
@@ -161,25 +167,25 @@ class ManagedProcess(private val name : String,
       val strand : Strand
       var currentTry : Int = 0
       var processStatus =  ProcessStatus.Started
+      var process : StartedProcess? = null
+      val logger = LoggerFactory.getLogger(javaClass<ManagedProcess>())
 
       [throws(javaClass<SuspendExecution>())]
       init {
         val thread = Thread(Runnable {
-
-          this.processStatus = ProcessStatus.Running
-          val logger = LoggerFactory.getLogger(javaClass<ManagedProcess>())
           MDC.put("process", "${this@ManagedProcess.name}-$id")
+          this.processStatus = ProcessStatus.Running
           while(true) {
             this.currentTry = this.currentTry + 1
 
-            val p = ProcessExecutor()
+            this.process = ProcessExecutor()
                   .command(this@ManagedProcess.cmd)
                   .redirectOutput(System.out)
                   .info(logger)
                   .start()
 
             logger.info("started")
-            val result = p.getFuture().get()
+            val result = this.process!!.getFuture().get()
             if (result.getExitValue() == 0) {
               logger.info("finished at try ${this.currentTry}")
               this.processStatus = ProcessStatus.Done
@@ -195,6 +201,10 @@ class ManagedProcess(private val name : String,
           }
         })
         this.strand = Strand.of(thread)
+        val l = this.logger
+        this.strand.setUncaughtExceptionHandler(UncaughtExceptionHandler {f, e ->
+          l.info("Instance killed!!!")
+        })
         this.strand.start()
       }
 
@@ -202,7 +212,11 @@ class ManagedProcess(private val name : String,
       public fun getStatus() : ManagedProcessInstanceJson =
         ManagedProcessInstanceJson(this.id, this.currentTry, this.processStatus)
 
-
+      [throws(javaClass<SuspendExecution>())]
+      public fun kill() {
+        this.strand.interrupt()
+        this.process?.getProcess()?.destroy()
+      }
     }
 }
 
@@ -215,14 +229,14 @@ public class Main {
       // TODO: Parse TOML
       val p1 = ManagedProcess("good_sleeper",
                               "./src/main/resources/sleeper.py",
-                              3, 2).spawn() as ManagedProcessTrait
-      val p2 = ManagedProcess("bad_sleeper",
+                              3, 8).spawn() as ManagedProcessTrait
+      /*val p2 = ManagedProcess("bad_sleeper",
                               "./src/main/resources/bad_sleeper.py",
-                              3, 1).spawn() as ManagedProcessTrait
+                              3, 1).spawn() as ManagedProcessTrait*/
 
       val kpm = ProcessManager().spawn() as ProcessManagerTrait
       kpm.manage(p1)
-      kpm.manage(p2)
+      /*kpm.manage(p2)*/
       kpm.startAll()
       val gson = Gson()
 
@@ -231,11 +245,11 @@ public class Main {
       },
       { gson.toJson(it)})
 
-      get("/:process/scale", {req, res ->
+      get("/ps/scale", {req, res ->
         // TODO: Handle Exception
-        val process = req.params(":process")
+        val name = req.queryParams("name")
         val to = req.queryParams("to")
-        kpm.scale(process, Integer.valueOf(to))
+        kpm.scale(name, Integer.valueOf(to))
         },
         {gson.toJson(it)})
     }
