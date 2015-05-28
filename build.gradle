@@ -70,7 +70,7 @@ dependencies {
     compile 'org.ow2.asm:asm:5.0.4'
     testCompile("junit:junit")
     testCompile 'org.ow2.asm:asm:5.0.4'
-    testCompile 'org.jetbrains.spek:spek:0.1-SNAPSHOT'
+    testCompile 'org.jetbrains.spek:spek:0.1-20150327.123055-18'
 
 }
 

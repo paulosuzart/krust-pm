@@ -16,9 +16,9 @@ class MainSpek : Spek() {init {
       on("scaling") {
         it ("should have 2 instance running after scale") {
           val scaled = p1.scale(null)
-          //Thread.sleep(1000)
           val statusAfterScale = p1.getStatus()
           shouldEqual(2, statusAfterScale.totalInstances)
+          shouldEqual(2, scaled)
         }
 
         it ("should scale down to 1 if request less than 1") {
