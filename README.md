@@ -59,7 +59,8 @@ REST API plus additional info
 Resource  | Verb | Path | Returns
 --------- | ---- | ---- | --------
 `root`    | GET  | `/`    | Json with Process details (see above). `?status=S` will match `S` to at least one instance with the given status.
-`process` | GET  | `/ps` | Returns the number of afected instances. `name=NAME` is the target process, `to=AMOUNT` sets the number of instances of `NAME` to `AMOUNT`. You can't specify which instance will be killed.
+`process` | GET  | `/ps` | Context for interacting with processes. See below.
+`process`  | GET | `/ps/scale` | Returns the number of afected instances. `name=NAME` is the target process, `to=AMOUNT` sets the number of instances of `NAME` to `AMOUNT`. You can't specify which instance will be killed. 
 
 Notice:
    - `krust-pm` is designed to manage long running processes such as `python` process, web servers etc. But in case of any process instance finishes, it will be with status Done. All managing resources (not Java Process Management) will be hanging on the server.
