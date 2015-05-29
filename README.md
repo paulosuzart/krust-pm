@@ -7,8 +7,8 @@ This is a pocket process manager. At some point it will be a better imitation of
 
 Behind the scenes it uses [Quasar actors and fibers](http://docs.paralleluniverse.co/quasar/) to handle the whole thing.
 
-Using it is very simple, just drop a rust-pm.toml in the same folder your
-`krust-pm` starts with a config like:
+Using it is very simple, just drop a `krust-pm.toml` in the same folder your
+`krust-pm` starts, and add a config like:
 
 ```toml
 server_name = "localhost"
@@ -77,6 +77,7 @@ TODO
 
    - Augment the API to support scaling processes down and up. **Done**
    - Implement 0 `max_retries` to mean infinite.
+   - Right now log destination is hard coded to logback.
    - Allow configuration of `workdir` for processes.
    - Add command line parser to specify config file. **Done**
    - Add `env` per process.
