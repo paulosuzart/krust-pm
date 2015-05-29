@@ -71,6 +71,7 @@ dependencies {
     testCompile("junit:junit")
     testCompile 'org.ow2.asm:asm:5.0.4'
     testCompile 'org.jetbrains.spek:spek:0.1-20150327.123055-18'
+    compile 'com.moandjiezana.toml:toml4j:0.4.0'
 
 }
 

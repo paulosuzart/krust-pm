@@ -11,11 +11,18 @@ Using it is very simple, just drop a rust-pm.toml in the same folder your
 `krust-pm` starts with a config like:
 
 ```toml
-server-port = "localhost:4000"
-[good_sleeper] # Process name
-command = "./sleeper.py" # right now support 0 args commands
+server_name = "localhost"
+server_port = 4000
+log_dir     = "/tmp"
+
+[[processes]]
+name = "good_sleeper"
+cmd = "./src/main/resources/sleeper.py" # right now support 0 args commands
 max_retries = 3 # 0 means forever
-instances = 2
+instances = 8
+env = [
+  ["MY_ENVAR", "test.ok"]
+]
 ```
 
 And with luck you open your browser at `localhost:4000` and will see something like:
@@ -71,7 +78,7 @@ TODO
    - Augment the API to support scaling processes down and up. **Done**
    - Implement 0 `max_retries` to mean infinite.
    - Allow configuration of `workdir` for processes.
-   - Add command line parser to specify config file.
+   - Add command line parser to specify config file. **Done**
    - Add `env` per process.
    - Specify the os `user` that must run a managed process
 

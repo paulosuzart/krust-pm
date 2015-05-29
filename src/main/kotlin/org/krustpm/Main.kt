@@ -11,6 +11,7 @@ import co.paralleluniverse.actors.behaviors.ProxyServerActor
 import co.paralleluniverse.fibers.SuspendExecution
 
 import java.lang.Runnable
+import java.io.File
 
 import org.zeroturnaround.exec.InvalidExitValueException
 import org.zeroturnaround.exec.ProcessExecutor
@@ -25,6 +26,7 @@ import spark.Request
 import spark.Response
 
 import com.google.gson.Gson
+import com.google.common.primitives.Ints
 
 
 enum class ProcessStatus() {
@@ -226,19 +228,19 @@ public class Main {
   companion object {
     platformStatic public fun main(args: Array<String>) {
 
-      // TODO: Parse TOML
-      val p1 = ManagedProcess("good_sleeper",
-                              "./src/main/resources/sleeper.py",
-                              3, 8).spawn() as ManagedProcessTrait
-      val p2 = ManagedProcess("bad_sleeper",
-                              "./src/main/resources/bad_sleeper.py",
-                              3, 1).spawn() as ManagedProcessTrait
-
+      val file = if (args.count() == 0) { "./krust-pm.toml" } else { args[0] }
+      val toml = parseConfig(File(file))
       val kpm = ProcessManager().spawn() as ProcessManagerTrait
-      kpm.manage(p1)
-      kpm.manage(p2)
+
+      loadProcesses(toml).forEach {
+        kpm.manage(it.spawn() as ManagedProcessTrait)
+      }
+
       kpm.startAll()
       val gson = Gson()
+
+      // TODO: Can't set port. Why?
+      //setPort(Ints.checkedCast(toml.getLong("server_port")))
 
       get("/", {req, res ->
         kpm.getStatus()
