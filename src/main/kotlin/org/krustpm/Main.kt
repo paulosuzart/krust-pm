@@ -230,13 +230,13 @@ public class Main {
       val p1 = ManagedProcess("good_sleeper",
                               "./src/main/resources/sleeper.py",
                               3, 8).spawn() as ManagedProcessTrait
-      /*val p2 = ManagedProcess("bad_sleeper",
+      val p2 = ManagedProcess("bad_sleeper",
                               "./src/main/resources/bad_sleeper.py",
-                              3, 1).spawn() as ManagedProcessTrait*/
+                              3, 1).spawn() as ManagedProcessTrait
 
       val kpm = ProcessManager().spawn() as ProcessManagerTrait
       kpm.manage(p1)
-      /*kpm.manage(p2)*/
+      kpm.manage(p2)
       kpm.startAll()
       val gson = Gson()
 
