@@ -1,0 +1,17 @@
+server_name = "localhost"
+server_port = 4000
+log_dir     = "/tmp"
+
+[[processes]]
+name = "good_sleeper"
+cmd = "./src/main/resources/sleeper.py" # right now support 0 args commands
+max_retries = 3 # 0 means forever
+instances = 8
+env = [
+  ["MY_ENVAR", "test.ok"]
+]
+
+[[processes]] # Process name
+name = "bad_sleeper"
+cmd = "./src/main/resources/bad_sleeper.py" # right now support 0 args commands
+max_retries = 3 # 0 means forever
