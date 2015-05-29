@@ -7,14 +7,14 @@ import  com.moandjiezana.toml.Toml
 
 fun Toml.asManagedProcess(defaults : Toml) : ManagedProcess  {
   return ManagedProcess(
-    this.getString("name"),
-    this.getString("cmd"),
-    Ints.checkedCast(this.getLong("max_retries") ?: defaults.getLong("max_retries")),
-    Ints.checkedCast(this.getLong("instances") ?: defaults.getLong("instances")))
+    this.getString(Main.CFG_PROCESS_NAME),
+    this.getString(Main.CFG_CMD),
+    Ints.checkedCast(this.getLong(Main.CFG_MAX_RETRIES) ?: defaults.getLong(Main.CFG_MAX_RETRIES)),
+    Ints.checkedCast(this.getLong(Main.CFG_INSTANCES) ?: defaults.getLong(Main.CFG_INSTANCES)))
 }
 
 fun loadProcesses(toml : Toml) : List<ManagedProcess> {
-  return toml.getTables("processes").map {
+  return toml.getTables(Main.CFG_PROCESSES).map {
     it.asManagedProcess(toml)
   }
 }
@@ -22,11 +22,11 @@ fun loadProcesses(toml : Toml) : List<ManagedProcess> {
 fun parseConfig(cfgFile : File) : Toml {
   println(cfgFile)
   val defaults = Toml().parse("""
-  max_retries = 0
-  instances = 1
-  server_name = "localhost"
-  server_port = 4567
-  log_dir     = "/var/logs"
+  ${Main.CFG_MAX_RETRIES} = 0
+  ${Main.CFG_INSTANCES}   = 1
+  ${Main.CFG_SERVER_NAME} = "localhost"
+  ${Main.CFG_SERVER_PORT} = 4567
+  ${Main.CFG_LOG_DIR}     = "/var/logs"
   """)
   return Toml(defaults).parse(cfgFile)
 }

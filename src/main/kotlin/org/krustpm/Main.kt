@@ -21,6 +21,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 
+import spark.SparkBase.*
 import spark.Spark.*
 import spark.Request
 import spark.Response
@@ -223,12 +224,25 @@ class ManagedProcess(private val name : String,
 }
 
 
+
 public class Main {
 
   companion object {
+    val DEFAULT_CONFIG_FILE = "./krust-pm.toml"
+    val CFG_SERVER_NAME   = "server_name"
+    val CFG_SERVER_PORT   = "server_port"
+    val CFG_MAX_RETRIES   = "max_retries"
+    val CFG_INSTANCES     = "instances"
+    val CFG_LOG_DIR       = "log_dir"
+    val CFG_PROCESS_NAME  = "name"
+    val CFG_CMD           = "cmd"
+    val CFG_PROCESSES     = "processes"
+
+
+
     platformStatic public fun main(args: Array<String>) {
 
-      val file = if (args.count() == 0) { "./krust-pm.toml" } else { args[0] }
+      val file = if (args.count() == 0) { Main.DEFAULT_CONFIG_FILE } else { args[0] }
       val toml = parseConfig(File(file))
       val kpm = ProcessManager().spawn() as ProcessManagerTrait
 
@@ -239,21 +253,26 @@ public class Main {
       kpm.startAll()
       val gson = Gson()
 
-      // TODO: Can't set port. Why?
-      //setPort(Ints.checkedCast(toml.getLong("server_port")))
+      ipAddress(toml.getString(CFG_SERVER_NAME))
+      port(Ints.checkedCast(toml.getLong(CFG_SERVER_PORT)))
+
 
       get("/", {req, res ->
-        kpm.getStatus()
-      },
-      { gson.toJson(it)})
+          kpm.getStatus()
+        },
+        { gson.toJson(it)}
+      )
 
       get("/ps/scale", {req, res ->
         // TODO: Handle Exception
-        val name = req.queryParams("name")
-        val to = req.queryParams("to")
-        kpm.scale(name, Integer.valueOf(to))
+          val name = req.queryParams("name")
+          val to = req.queryParams("to")
+          kpm.scale(name, Integer.valueOf(to))
         },
-        {gson.toJson(it)})
+        { gson.toJson(it) }
+      )
+
+
     }
   }
 
