@@ -8,7 +8,6 @@ import co.paralleluniverse.strands.SuspendableRunnable
 import co.paralleluniverse.actors.ActorRef
 import co.paralleluniverse.fibers.SuspendExecution
 import co.paralleluniverse.actors.behaviors.ProxyServerActor
-import co.paralleluniverse.fibers.SuspendExecution
 
 import java.lang.Runnable
 import java.io.File
@@ -37,20 +36,7 @@ enum class ProcessStatus() {
     RetriesExceeded
 }
 
-trait ProcessManagerTrait {
-  [throws(javaClass<SuspendExecution>())]
-  public fun manage(process : ManagedProcessTrait)
 
-  [throws(javaClass<SuspendExecution>())]
-  public fun startAll()
-
-  [throws(javaClass<SuspendExecution>())]
-  public fun getStatus() : List<ManagedProcessJson>
-
-  [throws(javaClass<SuspendExecution>())]
-  public fun scale(name : String, to : Int) : Int
-
-}
 
 class ProcessManager() : ProxyServerActor("krust-pm", true),
                          ProcessManagerTrait {
@@ -87,17 +73,6 @@ public data class ManagedProcessInstanceJson(val id : Int,
                                              val currentTry : Int,
                                              val status : ProcessStatus)
 
-public trait ManagedProcessTrait {
-  [throws(javaClass<SuspendExecution>())]
-  public fun scale(to : Int?): Int
-
-  [throws(javaClass<SuspendExecution>())]
-  public fun getStatus(): ManagedProcessJson
-
-  [throws(javaClass<SuspendExecution>())]
-  public fun getName(): String
-
-}
 
 class ManagedProcess(private val name : String,
                      private val cmd : String,
@@ -229,16 +204,14 @@ public class Main {
 
   companion object {
     val DEFAULT_CONFIG_FILE = "./krust-pm.toml"
-    val CFG_SERVER_NAME   = "server_name"
-    val CFG_SERVER_PORT   = "server_port"
-    val CFG_MAX_RETRIES   = "max_retries"
-    val CFG_INSTANCES     = "instances"
-    val CFG_LOG_DIR       = "log_dir"
-    val CFG_PROCESS_NAME  = "name"
-    val CFG_CMD           = "cmd"
-    val CFG_PROCESSES     = "processes"
-
-
+    val CFG_SERVER_NAME     = "server_name"
+    val CFG_SERVER_PORT     = "server_port"
+    val CFG_MAX_RETRIES     = "max_retries"
+    val CFG_INSTANCES       = "instances"
+    val CFG_LOG_DIR         = "log_dir"
+    val CFG_PROCESS_NAME    = "name"
+    val CFG_CMD             = "cmd"
+    val CFG_PROCESSES       = "processes"
 
     platformStatic public fun main(args: Array<String>) {
 
@@ -260,7 +233,7 @@ public class Main {
       get("/", {req, res ->
           kpm.getStatus()
         },
-        { gson.toJson(it)}
+        { gson.toJson(it) }
       )
 
       get("/ps/scale", {req, res ->
@@ -271,8 +244,6 @@ public class Main {
         },
         { gson.toJson(it) }
       )
-
-
     }
   }
 
