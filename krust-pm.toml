@@ -10,6 +10,7 @@ instances = 8
 env = [
   ["MY_ENVAR", "test.ok"]
 ]
+work_dir = "./src/main/resources"
 
 [[processes]] # Process name
 name = "bad_sleeper"

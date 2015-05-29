@@ -67,7 +67,8 @@ public data class ManagedProcessJson(val name : String,
                                      val cmd : String,
                                      val status : ProcessStatus,
                                      val totalInstances : Int,
-                                     val instances : List<ManagedProcessInstanceJson>)
+                                     val instances : List<ManagedProcessInstanceJson>,
+                                     val env : Map<String, String>)
 
 public data class ManagedProcessInstanceJson(val id : Int,
                                              val currentTry : Int,
@@ -77,8 +78,10 @@ public data class ManagedProcessInstanceJson(val id : Int,
 class ManagedProcess(private val name : String,
                      private val cmd : String,
                      private val maxRetries : Int,
-                     private var initScale : Int) :
+                     private var initScale : Int,
+                     private val env : Map<String, String>) :
                      ProxyServerActor(name, true), ManagedProcessTrait {
+
   var instanceCount : Int = 0
   var currentTry : Int = 0
   val instances = arrayListOf<ManagedProcess.Instance>()
@@ -137,7 +140,8 @@ class ManagedProcess(private val name : String,
             cmd = this.cmd,
             status = this.processStatus,
             totalInstances = this.instances.size(),
-            instances = i
+            instances = i,
+            env = this.env
           )
     }
 
@@ -160,6 +164,7 @@ class ManagedProcess(private val name : String,
                   .command(this@ManagedProcess.cmd)
                   .redirectOutput(System.out)
                   .info(logger)
+                  .environment(this@ManagedProcess.env)
                   .start()
 
             logger.info("started")

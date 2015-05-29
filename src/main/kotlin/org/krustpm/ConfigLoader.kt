@@ -7,10 +7,12 @@ import  com.moandjiezana.toml.Toml
 
 fun Toml.asManagedProcess(defaults : Toml) : ManagedProcess  {
   return ManagedProcess(
-    this.getString(Main.CFG_PROCESS_NAME),
-    this.getString(Main.CFG_CMD),
-    Ints.checkedCast(this.getLong(Main.CFG_MAX_RETRIES) ?: defaults.getLong(Main.CFG_MAX_RETRIES)),
-    Ints.checkedCast(this.getLong(Main.CFG_INSTANCES) ?: defaults.getLong(Main.CFG_INSTANCES)))
+    name = this.getString(Main.CFG_PROCESS_NAME),
+    cmd = this.getString(Main.CFG_CMD),
+    maxRetries = Ints.checkedCast(this.getLong(Main.CFG_MAX_RETRIES) ?: defaults.getLong(Main.CFG_MAX_RETRIES)),
+    initScale = Ints.checkedCast(this.getLong(Main.CFG_INSTANCES) ?: defaults.getLong(Main.CFG_INSTANCES)),
+    env = mapOf<String, String>()
+    )
 }
 
 fun loadProcesses(toml : Toml) : List<ManagedProcess> {
