@@ -22,7 +22,6 @@ fun loadProcesses(toml : Toml) : List<ManagedProcess> {
 }
 
 fun parseConfig(cfgFile : File) : Toml {
-  println(cfgFile)
   val defaults = Toml().parse("""
   ${Main.CFG_MAX_RETRIES} = 0
   ${Main.CFG_INSTANCES}   = 1

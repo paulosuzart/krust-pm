@@ -1,13 +1,13 @@
 buildscript {
     ext.kotlin_version = '0.12.200'
     ext.quasar_version = '0.6.2'
+
     repositories {
         mavenLocal()
         mavenCentral()
     }
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"  // New
-        //classpath("org.springframework.boot:spring-boot-gradle-plugin:1.1.10.RELEASE")
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
@@ -16,7 +16,7 @@ plugins {
 }
 
 apply plugin: 'java'
-apply plugin: 'kotlin' // New
+apply plugin: 'kotlin'
 apply plugin: 'application'
 apply plugin: 'maven'
 
@@ -27,7 +27,7 @@ configurations {
 }
 
 jar {
-    baseName = 'krust-pm-0.1.0.jar'
+    baseName = 'krust-pm'
     version =  '0.1.0'
 }
 
@@ -59,8 +59,8 @@ sourceSets {
 dependencies {
     compile("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version") // New
     compile "co.paralleluniverse:quasar-actors:$quasar_version"
-    compile  "co.paralleluniverse:quasar-core:$quasar_version:jdk8"
-    quasar  "co.paralleluniverse:quasar-core:$quasar_version:jdk8"
+    compile  "co.paralleluniverse:quasar-core:$quasar_version" // No jdk8 by now
+    quasar  "co.paralleluniverse:quasar-core:$quasar_version" //No jdk8 by now
     compile 'co.paralleluniverse:capsule-maven:1.0-rc1'
     compile "org.zeroturnaround:zt-exec:1.8"
     compile ('ch.qos.logback:logback-classic:1.1.3')
@@ -81,7 +81,6 @@ task wrapper(type: Wrapper) {
 }
 
 
-
 run {
     jvmArgs "-javaagent:${configurations.quasar.iterator().next()}"
 }
@@ -91,14 +90,13 @@ test {
 }
 
 test.dependsOn jar
+
 tasks.withType(Test) {
         useJUnit()
         // systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
-
-	// systemProperty "java.util.logging.config.file", "jul.properties"
+        // systemProperty "java.util.logging.config.file", "jul.properties"
         //systemProperty "log4j.configurationFile", "${rootProject.projectDir}/log4j.xml"
         // systemProperty "Log4jContextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
-
         // systemProperty 'co.paralleluniverse.debugMode', 'true'
         systemProperty 'co.paralleluniverse.monitoring.flightRecorderLevel', '5'
         systemProperty 'co.paralleluniverse.globalFlightRecorder', 'true'
