@@ -36,8 +36,6 @@ enum class ProcessStatus() {
     RetriesExceeded
 }
 
-
-
 class ProcessManager() : ProxyServerActor("krust-pm", true),
                          ProcessManagerTrait {
   val processes = hashMapOf<String, ManagedProcessTrait>()
