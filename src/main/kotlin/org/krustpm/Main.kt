@@ -30,9 +30,9 @@ import com.google.common.primitives.Ints
 
 
 enum class ProcessStatus() {
-    Started
-    Running
-    Done
+    Started,
+    Running,
+    Done,
     RetriesExceeded
 }
 
@@ -42,24 +42,24 @@ class ProcessManager() : ProxyServerActor("krust-pm", true),
                          ProcessManagerTrait {
   val processes = hashMapOf<String, ManagedProcessTrait>()
 
-  [throws(javaClass<SuspendExecution>())]
+  throws(SuspendExecution::class)
   override public fun manage(process : ManagedProcessTrait) {
       this.processes[process.getName()] = process
   }
 
-  [throws(javaClass<SuspendExecution>())]
+  throws(SuspendExecution::class)
   override public fun startAll() {
     for ((k, v) in this.processes) {
       v.scale(null)
     }
   }
 
-  [throws(javaClass<SuspendExecution>())]
+  throws(SuspendExecution::class)
   override public fun scale(name : String, to : Int) : Int {
     return this.processes[name]?.scale(to) ?: 0
   }
 
-  [throws(javaClass<SuspendExecution>())]
+  throws(SuspendExecution::class)
   override public fun getStatus() = this.processes.map {it.value.getStatus()}
 }
 
@@ -92,10 +92,10 @@ class ManagedProcess(private val name : String,
     MDC.put("process", name)
   }
 
-  [throws(javaClass<SuspendExecution>())]
+  throws(SuspendExecution::class)
   override public fun getName() = this.name
 
-  [throws(javaClass<SuspendExecution>())]
+  throws(SuspendExecution::class)
   protected fun scaleUp(to : Int) {
     logger.debug("Scaling up to $to")
     for (i in 1..to) {
@@ -103,7 +103,7 @@ class ManagedProcess(private val name : String,
     }
   }
 
-  [throws(javaClass<SuspendExecution>())]
+  throws(SuspendExecution::class)
   protected fun scaleDown(to : Int) {
     logger.debug("Scaling down to $to")
     this.instances.take(to).map {
@@ -113,7 +113,7 @@ class ManagedProcess(private val name : String,
     }
   }
 
-  [throws(javaClass<SuspendExecution>())]
+  throws(SuspendExecution::class)
   override fun scale(to : Int?) : Int {
     val verified = to ?: this.initScale
 
@@ -132,7 +132,7 @@ class ManagedProcess(private val name : String,
   }
 
 
-  [throws(javaClass<SuspendExecution>())]
+  throws(SuspendExecution::class)
   override public fun getStatus() : ManagedProcessJson {
     val i = this.instances.map { it.getStatus() }
     return ManagedProcessJson(
@@ -152,7 +152,7 @@ class ManagedProcess(private val name : String,
       var process : StartedProcess? = null
       val logger = LoggerFactory.getLogger(javaClass<ManagedProcess>())
 
-      [throws(javaClass<SuspendExecution>())]
+      throws(SuspendExecution::class)
       init {
         val thread = Thread(Runnable {
           MDC.put("process", "${this@ManagedProcess.name}-$id")
@@ -191,11 +191,11 @@ class ManagedProcess(private val name : String,
         this.strand.start()
       }
 
-      [throws(javaClass<SuspendExecution>())]
+      throws(SuspendExecution::class)
       public fun getStatus() : ManagedProcessInstanceJson =
         ManagedProcessInstanceJson(this.id, this.currentTry, this.processStatus)
 
-      [throws(javaClass<SuspendExecution>())]
+      throws(SuspendExecution::class)
       public fun kill() {
         this.strand.interrupt()
         this.process?.getProcess()?.destroy()

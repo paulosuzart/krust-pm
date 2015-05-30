@@ -11,7 +11,8 @@ class MainSpek : Spek() {init {
       val p1 = ManagedProcess("good_sleeper",
                               "./src/main/resources/sleeper.py",
                               3,
-                              2).spawn() as ManagedProcessTrait
+                              2,
+                              mapOf<String,String>()).spawn() as ManagedProcessTrait
 
       on("scaling") {
         it ("should have 2 instance running after scale") {
