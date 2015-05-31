@@ -205,9 +205,8 @@ class ManagedProcess(private val name : String,
 
 
 
-public class Main {
+public object Main {
 
-  companion object {
     val DEFAULT_CONFIG_FILE = "./krust-pm.toml"
     val CFG_SERVER_NAME     = "server_name"
     val CFG_SERVER_PORT     = "server_port"
@@ -217,30 +216,30 @@ public class Main {
     val CFG_PROCESS_NAME    = "name"
     val CFG_CMD             = "cmd"
     val CFG_PROCESSES       = "processes"
-
-    platformStatic public fun main(args: Array<String>) {
-
+    
+    platformStatic public fun main(vararg args: String) {
+    
       val file = if (args.count() == 0) { Main.DEFAULT_CONFIG_FILE } else { args[0] }
       val toml = parseConfig(File(file))
       val kpm = ProcessManager().spawn() as ProcessManagerTrait
-
+    
       loadProcesses(toml).forEach {
         kpm.manage(it.spawn() as ManagedProcessTrait)
       }
-
+    
       kpm.startAll()
       val gson = Gson()
-
+    
       ipAddress(toml.getString(CFG_SERVER_NAME))
       port(Ints.checkedCast(toml.getLong(CFG_SERVER_PORT)))
-
-
+    
+    
       get("/", {req, res ->
           kpm.getStatus()
         },
         { gson.toJson(it) }
       )
-
+    
       get("/ps/scale", {req, res ->
         // TODO: Handle Exception
           val name = req.queryParams("name")
@@ -250,6 +249,4 @@ public class Main {
         { gson.toJson(it) }
       )
     }
-  }
-
 }
