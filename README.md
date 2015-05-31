@@ -11,18 +11,25 @@ Using it is very simple, just drop a `krust-pm.toml` in the same folder your
 `krust-pm` starts, and add a config like:
 
 ```toml
-server_name = "localhost"
-server_port = 4000
-log_dir     = "/tmp"
+server_name  = "localhost"
+server_port  = 4000
+log_dir      = "/tmp"
+debug_config = true
 
 [[processes]]
 name = "good_sleeper"
-cmd = "./src/main/resources/sleeper.py" # right now support 0 args commands
+cmd = "./sleeper.py" # right now support 0 args commands
 max_retries = 3 # 0 means forever
 instances = 8
-env = [
-  ["MY_ENVAR", "test.ok"]
-]
+work_dir = "./src/main/resources"
+[processes.env]
+  MY_ENVAR = "test.ok"
+  NACHO_KEY = "27017999929231"
+
+[[processes]] # Process name
+name = "bad_sleeper"
+cmd = "./src/main/resources/bad_sleeper.py" # right now support 0 args commands
+max_retries = 3 # 0 means forever
 ```
 
 And with luck you open your browser at `localhost:4000` and will see something like:
@@ -47,6 +54,7 @@ And with luck you open your browser at `localhost:4000` and will see something l
       }
     ]
   },
+  //...
 ]
 
 ```
@@ -60,9 +68,9 @@ Resource  | Verb | Path | Returns
 --------- | ---- | ---- | --------
 `root`    | GET  | `/`    | Json with Process details (see above). `?status=S` will match `S` to at least one instance with the given status.
 `process` | GET  | `/ps` | Context for interacting with processes. See below.
-`process`  | GET | `/ps/scale` | Returns the number of afected instances. `name=NAME` is the target process, `to=AMOUNT` sets the number of instances of `NAME` to `AMOUNT`. You can't specify which instance will be killed. 
+`process`  | GET | `/ps/scale` | Returns the number of afected instances. `name=NAME` is the target process, `to=AMOUNT` sets the number of instances of `NAME` to `AMOUNT`. You can't specify which instance will be killed.
 
-Notice:
+Additional Info:
    - `krust-pm` is designed to manage long running processes such as `python` process, web servers etc. But in case of any process instance finishes, it will be with status Done. All managing resources (not Java Process Management) will be hanging on the server.
    - If you scale down any process, it will remove the first `AMOUNT` of elements of the internal list, regardless of their status.
 
@@ -79,9 +87,9 @@ TODO
    - Augment the API to support scaling processes down and up. **Done**
    - Implement 0 `max_retries` to mean infinite.
    - Right now log destination is hard coded to logback.
-   - Allow configuration of `workdir` for processes.
+   - Allow configuration of `workdir` for processes. **Done**
    - Add command line parser to specify config file. **Done**
-   - Add `env` per process.
+   - Add `env` per process. **Done**
    - Specify the os `user` that must run a managed process
 
 Licensing

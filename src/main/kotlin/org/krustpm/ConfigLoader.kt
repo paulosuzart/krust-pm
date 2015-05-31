@@ -14,7 +14,8 @@ fun Toml.asManagedProcess(defaults : Toml) : ManagedProcess  {
     cmd = this.getString(Main.CFG_CMD),
     maxRetries = Ints.checkedCast(this.getLong(Main.CFG_MAX_RETRIES) ?: defaults.getLong(Main.CFG_MAX_RETRIES)),
     initScale = Ints.checkedCast(this.getLong(Main.CFG_INSTANCES) ?: defaults.getLong(Main.CFG_INSTANCES)),
-    env = this.to(javaClass<TomlEnvWrapper>()).env
+    env = this.to(javaClass<TomlEnvWrapper>()).env,
+    cwd = File(this.getString(Main.CFG_CWD) ?: defaults.getString(Main.CFG_CWD))
     )
 }
 
@@ -38,6 +39,7 @@ fun parseConfig(cfgFile : File) : Toml {
   ${Main.CFG_LOG_DIR}     = "/var/logs"
   ${Main.CFG_ENV}         = "env = {}"
   ${Main.CFG_DEBUG_CFG}   = false
+  ${Main.CFG_CWD}         = "."
   """)
   return Toml(defaults).parse(cfgFile)
 }

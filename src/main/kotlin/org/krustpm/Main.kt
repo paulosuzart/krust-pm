@@ -79,7 +79,8 @@ class ManagedProcess(private val name : String,
                      private val cmd : String,
                      private val maxRetries : Int,
                      private var initScale : Int,
-                     private val env : Map<String, String>) :
+                     private val env : Map<String, String>,
+                     private val cwd : File) :
                      ProxyServerActor(name, true), ManagedProcessTrait {
 
   var instanceCount : Int = 0
@@ -149,6 +150,7 @@ class ManagedProcess(private val name : String,
       Managed Process: ${this.name}
       Initial Instances: ${this.initScale}
       Environment: ${this.env}
+      Work Directory: ${this.cwd}
       """
 
 
@@ -172,6 +174,7 @@ class ManagedProcess(private val name : String,
                   .redirectOutput(System.out)
                   .info(logger)
                   .environment(this@ManagedProcess.env)
+                  .directory(this@ManagedProcess.cwd)
                   .start()
 
             logger.info("started")
@@ -225,30 +228,31 @@ public object Main {
     val CFG_PROCESSES       = "processes"
     val CFG_ENV             = "env"
     val CFG_DEBUG_CFG       = "debug_config"
-    
+    val CFG_CWD             = "work_dir"
+
     platformStatic public fun main(vararg args: String) {
-    
+
       val file = if (args.count() == 0) { Main.DEFAULT_CONFIG_FILE } else { args[0] }
       val toml = parseConfig(File(file))
       val kpm = ProcessManager().spawn() as ProcessManagerTrait
-    
+
       loadProcesses(toml).forEach {
         kpm.manage(it.spawn() as ManagedProcessTrait)
       }
-    
+
       kpm.startAll()
       val gson = Gson()
-    
+
       ipAddress(toml.getString(CFG_SERVER_NAME))
       port(Ints.checkedCast(toml.getLong(CFG_SERVER_PORT)))
-    
-    
+
+
       get("/", {req, res ->
           kpm.getStatus()
         },
         { gson.toJson(it) }
       )
-    
+
       get("/ps/scale", {req, res ->
         // TODO: Handle Exception
           val name = req.queryParams("name")
