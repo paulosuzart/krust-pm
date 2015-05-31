@@ -34,7 +34,7 @@ max_retries = 3 # 0 means forever
 
 And with luck you open your browser at `localhost:4000` and will see something like:
 
-```json
+```javascript
 [
   {
     "name": "good_sleeper",
