@@ -80,6 +80,12 @@ WARN
 
 This is an early stage project, Not used in production yet.
 
+But if you want to try it:
+
+   1. clone the repo
+   2. run `gradle mavenCapsule`
+   3. fire it: java -javaagent:$PATH_TO_QUASAR_JAR -jar build/libs/krust-pm-capsule.jar 
+
 
 TODO
 ====
