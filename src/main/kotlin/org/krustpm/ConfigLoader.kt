@@ -11,7 +11,7 @@ fun Toml.asManagedProcess(defaults : Toml) : ManagedProcess  {
     cmd = this.getString(Main.CFG_CMD),
     maxRetries = Ints.checkedCast(this.getLong(Main.CFG_MAX_RETRIES) ?: defaults.getLong(Main.CFG_MAX_RETRIES)),
     initScale = Ints.checkedCast(this.getLong(Main.CFG_INSTANCES) ?: defaults.getLong(Main.CFG_INSTANCES)),
-    env = mapOf<String, String>()
+    env = mapOf()
     )
 }
 
