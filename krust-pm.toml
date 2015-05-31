@@ -1,16 +1,21 @@
-server_name = "localhost"
-server_port = 4000
-log_dir     = "/tmp"
+server_name  = "localhost"
+server_port  = 4000
+log_dir      = "/tmp"
+debug_config = true
 
 [[processes]]
 name = "good_sleeper"
 cmd = "./src/main/resources/sleeper.py" # right now support 0 args commands
 max_retries = 3 # 0 means forever
 instances = 8
-env = [
-  ["MY_ENVAR", "test.ok"]
-]
+# env = [
+#   ["NACHO_KEY", "27017999929231"]
+#   ["MY_ENVAR", "test.ok"],
+# ]
 work_dir = "./src/main/resources"
+[processes.env]
+  MY_ENVAR = "test.ok"
+  NACHO_KEY = "27017999929231"
 
 [[processes]] # Process name
 name = "bad_sleeper"

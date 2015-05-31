@@ -58,6 +58,7 @@ sourceSets {
 
 dependencies {
     compile("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version") // New
+    compile("org.jetbrains.kotlin:kotlin-reflect:$kotlin_version")
     compile "co.paralleluniverse:quasar-actors:$quasar_version"
     compile  "co.paralleluniverse:quasar-core:$quasar_version" // No jdk8 by now
     quasar  "co.paralleluniverse:quasar-core:$quasar_version" //No jdk8 by now

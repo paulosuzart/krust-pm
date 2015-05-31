@@ -145,6 +145,13 @@ class ManagedProcess(private val name : String,
           )
     }
 
+    override fun toString() = """
+      Managed Process: ${this.name}
+      Initial Instances: ${this.initScale}
+      Environment: ${this.env}
+      """
+
+
     inner class Instance(val id : Int) {
       val strand : Strand
       var currentTry : Int = 0
@@ -216,6 +223,8 @@ public object Main {
     val CFG_PROCESS_NAME    = "name"
     val CFG_CMD             = "cmd"
     val CFG_PROCESSES       = "processes"
+    val CFG_ENV             = "env"
+    val CFG_DEBUG_CFG       = "debug_config"
     
     platformStatic public fun main(vararg args: String) {
     
