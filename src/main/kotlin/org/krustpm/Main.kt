@@ -170,7 +170,7 @@ class ManagedProcess(private val name : String,
             this.currentTry = this.currentTry + 1
 
             this.process = ProcessExecutor()
-                  .command(this@ManagedProcess.cmd)
+                  .commandSplit(this@ManagedProcess.cmd)
                   .redirectOutput(System.out)
                   .info(logger)
                   .environment(this@ManagedProcess.env)
@@ -185,6 +185,9 @@ class ManagedProcess(private val name : String,
               break
             } else {
               logger.info("finished with error")
+              if (this@ManagedProcess.maxRetries == 0) {
+                continue
+              }
               if (this.currentTry == this@ManagedProcess.maxRetries) {
                 logger.info("No more retries left")
                 this.processStatus = ProcessStatus.RetriesExceeded

@@ -16,4 +16,4 @@ work_dir = "./src/main/resources"
 [[processes]] # Process name
 name = "bad_sleeper"
 cmd = "./src/main/resources/bad_sleeper.py" # right now support 0 args commands
-max_retries = 3 # 0 means forever
+max_retries = 0 # 0 means forever

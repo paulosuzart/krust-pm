@@ -3,7 +3,7 @@ krust-pm - Intro
 
 *Formeley `rust-pm (available at http://crates.io), now rewritten in [Kotlin](kotlinlang.org)*
 
-This is a pocket process manager. At some point it will be a better imitation of python's systemd.
+This is a pocket process manager. It is kinda imitation of python's `supervisord`.
 
 Behind the scenes it uses [Quasar actors and fibers](http://docs.paralleluniverse.co/quasar/) to handle the whole thing.
 
@@ -73,6 +73,8 @@ Resource  | Verb | Path | Returns
 Additional Info:
    - `krust-pm` is designed to manage long running processes such as `python` process, web servers etc. But in case of any process instance finishes, it will be with status Done. All managing resources (not Java Process Management) will be hanging on the server.
    - If you scale down any process, it will remove the first `AMOUNT` of elements of the internal list, regardless of their status.
+   - There is no way to get the `PID` of an instance.
+   - There is no way to specify the user that runs a command
 
 
 WARN
@@ -84,19 +86,18 @@ But if you want to try it:
 
    1. clone the repo
    2. run `gradle mavenCapsule`
-   3. fire it: java -javaagent:$PATH_TO_QUASAR_JAR -jar build/libs/krust-pm-capsule.jar 
+   3. fire it: java -javaagent:$PATH_TO_QUASAR_JAR -jar build/libs/krust-pm-capsule.jar
 
 
 TODO
 ====
 
    - Augment the API to support scaling processes down and up. **Done**
-   - Implement 0 `max_retries` to mean infinite.
-   - Right now log destination is hard coded to logback.
+   - Implement 0 `max_retries` to mean infinite. **Done**
    - Allow configuration of `workdir` for processes. **Done**
    - Add command line parser to specify config file. **Done**
    - Add `env` per process. **Done**
-   - Specify the os `user` that must run a managed process
+
 
 Licensing
 ===
